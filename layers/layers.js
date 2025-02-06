@@ -65,3 +65,62 @@ lyr_Edif_2.set('fieldLabels', { 'ID': 'no label', 'NCP': 'header label - always 
 lyr_Edif_2.on('precompose', function(evt) {
     evt.context.globalCompositeOperation = 'normal';
 });
+
+// Añadir capa de transporte
+var lyr_Transporte = new ol.layer.Tile({
+    'title': 'Transporte',
+    'opacity': 1.0,
+    source: new ol.source.XYZ({
+        url: 'http://tile.transporte.com/{z}/{x}/{y}.png'
+    })
+});
+layersList.push(lyr_Transporte);
+
+// Implementar geolocalización del usuario
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((position) => {
+        var userLocation = new ol.Feature({
+            geometry: new ol.geom.Point(ol.proj.fromLonLat([position.coords.longitude, position.coords.latitude]))
+        });
+        var userLayer = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                features: [userLocation]
+            }),
+            style: new ol.style.Style({
+                image: new ol.style.Icon({
+                    src: 'resources/user-location.png',
+                    scale: 0.1
+                })
+            })
+        });
+        layersList.push(userLayer);
+    });
+}
+
+// Añadir rutas y direcciones usando servicio de terceros
+const getRoute = (start, end, callback) => {
+    fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?access_token=YOUR_MAPBOX_ACCESS_TOKEN`)
+        .then(response => response.json())
+        .then(data => {
+            const route = new ol.format.GeoJSON().readFeatures(data.routes[0].geometry);
+            callback(route);
+        });
+};
+
+// Ejemplo de uso de la función getRoute
+const start = [longitude1, latitude1];
+const end = [longitude2, latitude2];
+getRoute(start, end, (route) => {
+    var routeLayer = new ol.layer.Vector({
+        source: new ol.source.Vector({
+            features: route
+        }),
+        style: new ol.style.Style({
+            stroke: new ol.style.Stroke({
+                color: '#ff0000',
+                width: 2
+            })
+        })
+    });
+    layersList.push(routeLayer);
+});
