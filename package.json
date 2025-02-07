@@ -1,0 +1,15 @@
+{
+  "name": "WebMapColon",
+  "version": "1.0.0",
+  "description": "Mapa Web de la Ciudad de Colon, Entre Rios, Argentina",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'Build script not defined yet'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PamelaMorsentti/WebMapColon.git"
+  },
+  "author": "Pamela Morsentti",
+  "license": "ISC"
+}
