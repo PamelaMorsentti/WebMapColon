@@ -1,36 +1,49 @@
 var wms_layers = [];
-
-
-// Función para paginar datos
-const paginateData = (data, pageSize, pageIndex) => {
-    return data.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
-};
-
-// Usar Web Workers para cargar datos en segundo plano
-const loadLayerDataInWorker = (data, callback) => {
-    const worker = new Worker('dataLoaderWorker.js');
-    worker.postMessage(data);
-    worker.onmessage = (e) => {
-        callback(e.data);
-        worker.terminate();
-    };
-};
-
-// Función para añadir capa vectorial
-const addVectorLayer = (data, style, title, interactive) => {
-    var format = new ol.format.GeoJSON();
-    loadLayerDataInWorker(data, (features) => {
-        var jsonSource = new ol.source.Vector();
-        jsonSource.addFeatures(format.readFeatures(features, { dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857' }));
-        var layer = new ol.layer.Vector({
-            declutter: false,
-            source: jsonSource,
-            style: style,
-            popuplayertitle: title,
-            interactive: interactive,
-            title: `<img src="styles/legend/${title}.png" /> ${title}`
+        var lyr_OSMStandard_0 = new ol.layer.Tile({
+            'title': 'OSM Standard',
+            //'type': 'base',
+            'opacity': 1.000000,
+            
+            
+            source: new ol.source.XYZ({
+    attributions: ' &middot; <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors, CC-BY-SA</a>',
+                url: 'http://tile.openstreetmap.org/{z}/{x}/{y}.png'
+            })
         });
-
+var format_Parcela_1 = new ol.format.GeoJSON();
+var features_Parcela_1 = format_Parcela_1.readFeatures(json_Parcela_1, 
+            {dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857'});
+var jsonSource_Parcela_1 = new ol.source.Vector({
+    attributions: ' ',
+});
+jsonSource_Parcela_1.addFeatures(features_Parcela_1);
+var lyr_Parcela_1 = new ol.layer.Vector({
+                declutter: false,
+                source:jsonSource_Parcela_1, 
+                style: style_Parcela_1,
+                popuplayertitle: "Parcela",
+                interactive: true,
+                title: '<img src="styles/legend/Parcela_1.png" /> Parcela'
+            });
+var format_Edif_2 = new ol.format.GeoJSON();
+var features_Edif_2 = format_Edif_2.readFeatures(json_Edif_2, 
+            {dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857'});
+var jsonSource_Edif_2 = new ol.source.Vector({
+    attributions: ' ',
+});
+jsonSource_Edif_2.addFeatures(features_Edif_2);
+var lyr_Edif_2 = new ol.layer.Vector({
+                declutter: false,
+                source:jsonSource_Edif_2, 
+                style: style_Edif_2,
+                popuplayertitle: "Edif",
+                interactive: false,
+    title: 'Edif<br />\
+    <img src="styles/legend/Edif_2_0.png" /> M<br />\
+    <img src="styles/legend/Edif_2_1.png" /> P<br />\
+    <img src="styles/legend/Edif_2_2.png" /> R<br />\
+    <img src="styles/legend/Edif_2_3.png" /> <br />'
+        });
 lyr_OSMStandard_0.setVisible(true);lyr_Parcela_1.setVisible(true);lyr_Edif_2.setVisible(true);
 var layersList = [lyr_OSMStandard_0,lyr_Parcela_1,lyr_Edif_2];
 lyr_Parcela_1.set('fieldAliases', {'ID': 'ID', 'NCP': 'NCP', 'SEC': 'SEC', 'GRU': 'GRU', 'NMANZ': 'NMANZ', 'LMANZ': 'LMANZ', 'NPARC': 'NPARC', 'LPARC': 'LPARC', 'OBJETO': 'OBJETO', 'NOMBRE': 'NOMBRE', 'AREA': 'AREA', });
@@ -41,67 +54,4 @@ lyr_Parcela_1.set('fieldLabels', {'ID': 'no label', 'NCP': 'no label', 'SEC': 'h
 lyr_Edif_2.set('fieldLabels', {'ID': 'no label', 'NCP': 'header label - always visible', 'TIPO': 'header label - always visible', 'NIVEL': 'header label - always visible', 'ORIGEN': 'header label - always visible', 'AREA': 'header label - always visible', });
 lyr_Edif_2.on('precompose', function(evt) {
     evt.context.globalCompositeOperation = 'normal';
-<<<<<<< HEAD
 });
-
-// Añadir capa de transporte
-var lyr_Transporte = new ol.layer.Tile({
-    'title': 'Transporte',
-    'opacity': 1.0,
-    source: new ol.source.XYZ({
-        url: 'http://tile.transporte.com/{z}/{x}/{y}.png'
-    })
-});
-layersList.push(lyr_Transporte);
-
-// Implementar geolocalización del usuario
-if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition((position) => {
-        var userLocation = new ol.Feature({
-            geometry: new ol.geom.Point(ol.proj.fromLonLat([position.coords.longitude, position.coords.latitude]))
-        });
-        var userLayer = new ol.layer.Vector({
-            source: new ol.source.Vector({
-                features: [userLocation]
-            }),
-            style: new ol.style.Style({
-                image: new ol.style.Icon({
-                    src: 'resources/user-location.png',
-                    scale: 0.1
-                })
-            })
-        });
-        layersList.push(userLayer);
-    });
-}
-
-// Añadir rutas y direcciones usando servicio de terceros
-const getRoute = (start, end, callback) => {
-    fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?access_token=YOUR_MAPBOX_ACCESS_TOKEN`)
-        .then(response => response.json())
-        .then(data => {
-            const route = new ol.format.GeoJSON().readFeatures(data.routes[0].geometry);
-            callback(route);
-        });
-};
-
-// Ejemplo de uso de la función getRoute
-const start = [longitude1, latitude1];
-const end = [longitude2, latitude2];
-getRoute(start, end, (route) => {
-    var routeLayer = new ol.layer.Vector({
-        source: new ol.source.Vector({
-            features: route
-        }),
-        style: new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: '#ff0000',
-                width: 2
-            })
-        })
-    });
-    layersList.push(routeLayer);
-});
-=======
-});
->>>>>>> parent of 88a2807 (Update layers.js)
